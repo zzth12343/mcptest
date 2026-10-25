@@ -7,12 +7,12 @@
   "author": "Finn <zzth88@qq.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OWNER/mcptest.git"
+    "url": "git+https://github.com/zzth12343/mcptest.git"
   },
   "bugs": {
-    "url": "https://github.com/OWNER/mcptest/issues"
+    "url": "https://github.com/zzth12343/mcptest/issues"
   },
-  "homepage": "https://github.com/OWNER/mcptest#readme",
+  "homepage": "https://github.com/zzth12343/mcptest#readme",
   "bin": {
     "mcptest": "dist/cli.js"
   },

@@ -4,7 +4,7 @@
 
 **Black-box tests for your MCP server — the pytest of MCP.**
 
-[![CI](https://github.com/OWNER/mcptest/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/mcptest/actions/workflows/ci.yml)
+[![CI](https://github.com/zzth12343/mcptest/actions/workflows/ci.yml/badge.svg)](https://github.com/zzth12343/mcptest/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/mcptest.svg)](https://www.npmjs.com/package/mcptest)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
