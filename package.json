@@ -1,0 +1,55 @@
+{
+  "name": "mcptest",
+  "version": "0.1.0",
+  "description": "Black-box testing CLI for MCP servers — handshake smoke test, tool schema validation, and snapshot regression with CI-friendly output and exit codes.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Finn <zzth88@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OWNER/mcptest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/OWNER/mcptest/issues"
+  },
+  "homepage": "https://github.com/OWNER/mcptest#readme",
+  "bin": {
+    "mcptest": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "fixtures",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.19"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "demo": "node dist/cli.js test node fixtures/echo-server.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "testing",
+    "snapshot-testing",
+    "schema-validation",
+    "cli",
+    "ci"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "commander": "^14.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

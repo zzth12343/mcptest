@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+__snapshots__/
+*.log
+*.tsbuildinfo
+.DS_Store
+.vitest/
+.mimosa/
+.workbuddy-ai/
+.zcode/

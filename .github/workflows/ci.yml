@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [18, 20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Unit & black-box tests
+        run: npm test
+      - name: mcptest tests itself (dogfood)
+        run: |
+          node dist/cli.js test -u --snapshot-dir /tmp/snaps -- node fixtures/echo-server.mjs
+          node dist/cli.js test --snapshot-dir /tmp/snaps -- node fixtures/echo-server.mjs
+          node dist/cli.js test -u --snapshot-dir /tmp/snaps -- node fixtures/minifs-server.mjs
+          # a deliberately broken server must fail the run:
+          if MCPTEST_BREAK=remove node dist/cli.js test --snapshot-dir /tmp/snaps -- node fixtures/echo-server.mjs; then
+            echo "::error::expected the snapshot regression to fail the run"
+            exit 1
+          fi
