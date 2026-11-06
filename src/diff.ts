@@ -26,6 +26,43 @@ function indexLabel(elements: unknown[], index: number): string {
   return `[${index}]`;
 }
 
+function nameKey(element: unknown): string | null {
+  if (
+    typeof element === "object" &&
+    element !== null &&
+    !Array.isArray(element) &&
+    typeof (element as Record<string, unknown>).name === "string"
+  ) {
+    return (element as Record<string, unknown>).name as string;
+  }
+  return null;
+}
+
+/**
+ * Keys an array by its elements' `name` fields so inserting or removing an
+ * item does not misalign every following element (index diffing would report
+ * a cascade of fake "changed" lines). Returns null when the arrays are not
+ * safely keyable — missing names or duplicate names fall back to index mode.
+ */
+function keyByName(
+  before: unknown[],
+  after: unknown[],
+): { before: Map<string, unknown>; after: Map<string, unknown> } | null {
+  function build(elements: unknown[]): Map<string, unknown> | null {
+    const map = new Map<string, unknown>();
+    for (const element of elements) {
+      const key = nameKey(element);
+      if (key === null || map.has(key)) return null;
+      map.set(key, element);
+    }
+    return map;
+  }
+  if (before.length === 0 || after.length === 0) return null;
+  const beforeMap = build(before);
+  const afterMap = build(after);
+  return beforeMap && afterMap ? { before: beforeMap, after: afterMap } : null;
+}
+
 export function deepDiff(
   before: unknown,
   after: unknown,
@@ -60,6 +97,33 @@ export function deepDiff(
   }
 
   if (Array.isArray(before) && Array.isArray(after)) {
+    const keyed = keyByName(before, after);
+    if (keyed) {
+      const names = [
+        ...new Set([...keyed.before.keys(), ...keyed.after.keys()]),
+      ].sort();
+      for (const name of names) {
+        const beforeItem = keyed.before.get(name);
+        const afterItem = keyed.after.get(name);
+        if (beforeItem !== undefined && afterItem !== undefined) {
+          deepDiff(beforeItem, afterItem, `${path}[${name}]`, out);
+        } else if (beforeItem !== undefined) {
+          out.push({
+            kind: "removed",
+            path: `${path}[${name}]`,
+            before: beforeItem,
+          });
+        } else if (afterItem !== undefined) {
+          out.push({
+            kind: "added",
+            path: `${path}[${name}]`,
+            after: afterItem,
+          });
+        }
+      }
+      return out;
+    }
+
     const shared = Math.min(before.length, after.length);
     for (let i = 0; i < shared; i++) {
       deepDiff(before[i], after[i], `${path}${indexLabel(before, i)}`, out);

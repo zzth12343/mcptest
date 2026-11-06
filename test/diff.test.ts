@@ -21,6 +21,24 @@ describe("deepDiff", () => {
     ]);
   });
 
+  it("matches array items by name so a middle insertion adds one entry, not a cascade", () => {
+    const changes = deepDiff(
+      { tools: [{ name: "a" }, { name: "b" }, { name: "d" }] },
+      { tools: [{ name: "a" }, { name: "c" }, { name: "b" }, { name: "d" }] },
+    );
+    expect(changes).toEqual([{ kind: "added", path: "tools[c]", after: { name: "c" } }]);
+  });
+
+  it("falls back to index diffing when names are missing or duplicated", () => {
+    const changes = deepDiff(
+      [{ v: 1 }, { v: 2 }],
+      [{ v: 9 }, { v: 2 }],
+    );
+    expect(changes).toEqual([
+      { kind: "changed", path: "[0].v", before: 1, after: 9 },
+    ]);
+  });
+
   it("labels array elements by tool name when available", () => {
     const changes = deepDiff(
       { tools: [{ name: "a" }, { name: "b" }] },
