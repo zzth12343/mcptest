@@ -199,8 +199,8 @@ async function runCall(
 
   const errored = call.isError;
   const errorExpectation: CheckResult = {
-    name: "error",
-    ok: options.expectError ? errored : true,
+    name: "call",
+    ok: options.expectError ? errored : !errored,
     summary: options.expectError
       ? errored
         ? "errored as expected"
