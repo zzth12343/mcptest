@@ -17,6 +17,8 @@ export interface SnapshotOptions {
   command: string[];
   tools: NormalizedTool[];
   update: boolean;
+  /** Fail instead of warning when no baseline exists yet (implied in CI). */
+  strict?: boolean;
 }
 
 const SNAPSHOT_FORMAT = "mcptest/1";
@@ -47,13 +49,17 @@ export async function runSnapshotCheck(
 
   if (previous === undefined) {
     if (!options.update) {
+      const enforce = options.strict === true || Boolean(process.env.CI);
       return {
-        ok: false,
+        ok: !enforce,
         created: false,
         snapshotFile: file,
-        summary: `no snapshot yet for this target`,
+        summary: enforce
+          ? `no snapshot yet for this target`
+          : `no baseline yet — run with --update-snapshot to record one`,
         details: [
           `run again with --update-snapshot to record the current ${options.tools.length} tool(s) as the baseline`,
+          `CI runs (or --strict) fail until a baseline exists`,
         ],
       };
     }

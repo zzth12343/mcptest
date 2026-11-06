@@ -149,4 +149,71 @@ describe("mcptest CLI (black-box, against fixtures)", () => {
     },
     30_000,
   );
+
+  it(
+    "warns instead of failing when no baseline exists outside CI",
+    async () => {
+      const cwd = await freshDir();
+      workdirs.push(cwd);
+      const result = runCli(["test", "--", "node", ECHO], {
+        cwd,
+        env: { CI: "" }, // explicitly not a CI run
+      });
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("no baseline yet");
+    },
+    30_000,
+  );
+
+  it(
+    "still fails without a baseline when --strict is passed",
+    async () => {
+      const cwd = await freshDir();
+      workdirs.push(cwd);
+      const result = runCli(["test", "--strict", "--", "node", ECHO], {
+        cwd,
+        env: { CI: "" },
+      });
+      expect(result.code).toBe(1);
+      expect(result.stdout).toContain("no snapshot yet");
+    },
+    30_000,
+  );
+
+  it(
+    "calls a tool and asserts on its text result",
+    async () => {
+      const cwd = await freshDir();
+      workdirs.push(cwd);
+      const result = runCli(
+        [
+          "call",
+          "--tool", "echo",
+          "--args", JSON.stringify({ message: "hello" }),
+          "--expect-text", "hello",
+          "--", "node", ECHO,
+        ],
+        { cwd },
+      );
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("no error");
+      expect(result.stdout).toContain('result contains "hello"');
+    },
+    30_000,
+  );
+
+  it(
+    "treats a failed tool call as an expected error with --expect-error",
+    async () => {
+      const cwd = await freshDir();
+      workdirs.push(cwd);
+      const result = runCli(
+        ["call", "--tool", "does-not-exist", "--expect-error", "--", "node", ECHO],
+        { cwd },
+      );
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain("errored as expected");
+    },
+    30_000,
+  );
 });

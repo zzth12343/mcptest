@@ -1,10 +1,23 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { withTimeout } from "./util.js";
+import { CLIENT_NAME, VERSION } from "./version.js";
+
+export interface ToolCallSpec {
+  name: string;
+  args?: Record<string, unknown>;
+}
 
 export interface ProbeOptions {
   timeoutMs: number;
   env?: Record<string, string>;
+  /** When set, a single tools/call is executed after the handshake. */
+  toolCall?: ToolCallSpec;
+}
+
+export interface ToolCallResult {
+  isError: boolean;
+  text: string;
 }
 
 export interface ProbeResult {
@@ -12,6 +25,7 @@ export interface ProbeResult {
   serverVersion: string;
   capabilities: string[];
   tools: unknown[];
+  toolCall?: ToolCallResult;
   stderrTail: string[];
 }
 
@@ -76,7 +90,7 @@ export async function probeServer(
     buffer = (buffer + chunk.toString("utf8")).split("\n").slice(-MAX_STDERR_LINES).join("\n");
   });
 
-  const client = new Client({ name: "mcptest", version: "0.1.0" });
+  const client = new Client({ name: CLIENT_NAME, version: VERSION });
 
   try {
     const flushStderr = () => {
@@ -128,12 +142,42 @@ export async function probeServer(
       );
     }
 
+    let toolCall: ToolCallResult | undefined;
+    if (options.toolCall) {
+      try {
+        const result = (await withTimeout(
+          client.callTool({
+            name: options.toolCall.name,
+            arguments: options.toolCall.args ?? {},
+          }),
+          options.timeoutMs,
+          "tools/call",
+        )) as { isError?: boolean; content?: Array<{ type?: string; text?: string }> };
+        const text = (result.content ?? [])
+          .filter((block) => block.type === "text")
+          .map((block) => block.text ?? "")
+          .join("\n");
+        toolCall = { isError: result.isError === true, text };
+      } catch (error) {
+        // The SDK turns tool-level failures the server reports as JSON-RPC
+        // errors into exceptions — surface them as an errored call, not a
+        // probe crash, so `--expect-error` can assert on them.
+        flushStderr();
+        const reason = error instanceof Error ? error.message : String(error);
+        toolCall = {
+          isError: true,
+          text: `tools/call "${options.toolCall.name}" failed: ${formatValidationError(reason)}`,
+        };
+      }
+    }
+
     flushStderr();
     return {
       serverName: serverVersion?.name ?? "(unnamed)",
       serverVersion: serverVersion?.version ?? "?",
       capabilities,
       tools,
+      toolCall,
       stderrTail,
     };
   } finally {
