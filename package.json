@@ -4,6 +4,9 @@
   "description": "Black-box testing CLI for MCP servers — handshake smoke test, tool schema validation, and snapshot regression with CI-friendly output and exit codes.",
   "type": "module",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.com/"
+  },
   "author": "Finn <zzth88@qq.com>",
   "repository": {
     "type": "git",
